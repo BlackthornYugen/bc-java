@@ -2,7 +2,6 @@ package org.bouncycastle.crypto.test;
 
 import org.bouncycastle.asn1.nist.NISTNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.test.SimpleTest;
 
@@ -39,9 +38,6 @@ public class NISTECCTest
             BigInteger y = null;
 
             while (line != null) {
-                String header = line;
-                StringBuilder data = new StringBuilder();
-
                 while (null != (line = br.readLine())) {
                     Matcher matcher = Pattern.compile("^ ?(\\w+):? =? ?(\\w+)").matcher(line);
                     if (!matcher.matches()) continue;
@@ -65,15 +61,14 @@ public class NISTECCTest
                             y = new BigInteger(nistValue,  16);
                             break;
                     }
+
+                    if (curve == null || k == null || x == null || y == null) continue;
+
+                    TestMul(curve, k, x, y);
+                    k = null;
+                    x = null;
+                    y = null;
                 }
-
-                if (curve == null || k == null || x == null || y == null) continue;
-
-                TestMul(curve, k, x, y);
-                System.out.println(k.toString(10));
-                k = null;
-                x = null;
-                y = null;
             }
         } catch (IOException exception) {
             fail("Failed to load resources.", exception);
@@ -81,10 +76,12 @@ public class NISTECCTest
     }
 
     private void TestMul(X9ECParameters curve, BigInteger k, BigInteger x, BigInteger y) {
+        // Arrange
         ECPoint ecPoint = curve.getG().multiply(k).normalize();
-
         BigInteger affineXCoord = ecPoint.getAffineXCoord().toBigInteger();
         BigInteger affineYCoord = ecPoint.getAffineYCoord().toBigInteger();
+
+        // Assert
         isEquals("Unexpected X Coordinate", x, affineXCoord);
         isEquals("Unexpected Y Coordinate", y, affineYCoord);
     }
